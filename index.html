@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>short-ip — IP Address Converter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #34d399;
+      --red: #f87171;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      width: 100%;
+      padding: 28px 24px 0;
+      text-align: center;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    .logo-text { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .logo-text span { color: var(--accent2); }
+
+    header p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* ── Main card ────────────────────────────────────────── */
+    main {
+      width: 100%;
+      max-width: 720px;
+      padding: 32px 20px 60px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Input area ───────────────────────────────────────── */
+    .input-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .input-wrap {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      font-size: 1.05rem;
+      font-family: 'Courier New', monospace;
+      padding: 12px 44px 12px 14px;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .input-wrap input:focus {
+      border-color: var(--accent);
+    }
+
+    .input-wrap input.invalid {
+      border-color: var(--red);
+    }
+
+    .input-wrap input.valid {
+      border-color: var(--green);
+    }
+
+    .input-status {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 22px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      white-space: nowrap;
+    }
+    button:hover  { background: var(--accent2); }
+    button:active { transform: scale(.97); }
+
+    .btn-clear {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      padding: 12px 16px;
+    }
+    .btn-clear:hover { border-color: var(--red); color: var(--red); background: transparent; }
+
+    /* ── Version tabs ─────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      transition: all .2s;
+    }
+    .tab.active, .tab:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Result grid ──────────────────────────────────────── */
+    .results-label {
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .result-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      transition: border-color .2s;
+    }
+
+    .result-item:hover { border-color: var(--accent); }
+
+    .result-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .result-value {
+      font-family: 'Courier New', monospace;
+      font-size: .97rem;
+      color: var(--text);
+      word-break: break-all;
+      padding-right: 32px;
+    }
+
+    .result-value.accent  { color: var(--accent2); }
+    .result-value.green   { color: var(--green); }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: color .15s, background .15s;
+    }
+    .copy-btn:hover  { color: var(--accent2); background: var(--border); }
+    .copy-btn.copied { color: var(--green); }
+
+    /* ── Empty / placeholder ──────────────────────────────── */
+    .placeholder {
+      text-align: center;
+      color: var(--muted);
+      padding: 32px 0;
+      font-size: .95rem;
+    }
+
+    .placeholder .big { font-size: 2.5rem; margin-bottom: 8px; }
+
+    /* ── Info section ─────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .info-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .info-card h4 {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 6px;
+    }
+
+    .info-card p {
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── History ──────────────────────────────────────────── */
+    .history-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .history-row:hover { background: var(--surface2); }
+    .history-row span  { font-family: 'Courier New', monospace; font-size: .9rem; }
+    .history-row small { color: var(--muted); font-size: .75rem; }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    footer {
+      margin-top: auto;
+      padding: 20px;
+      color: var(--muted);
+      font-size: .8rem;
+      text-align: center;
+    }
+
+    footer a { color: var(--accent2); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Animations ───────────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-item { animation: fadeIn .18s ease both; }
+
+    @keyframes flash {
+      0%, 100% { background: var(--surface2); }
+      50%      { background: #6366f122; }
+    }
+    .result-item.flash { animation: flash .4s ease; }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .card { padding: 18px; }
+      .input-row { flex-direction: column; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">🔗</div>
+    <span class="logo-text">short<span>-ip</span></span>
+  </a>
+  <p>Convert any IPv4 address into all its alternative representations</p>
+</header>
+
+<main>
+
+  <!-- Input card -->
+  <div class="card">
+    <div class="input-row">
+      <div class="input-wrap">
+        <input
+          id="ipInput"
+          type="text"
+          placeholder="e.g. 192.168.1.1"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <span class="input-status" id="inputStatus"></span>
+      </div>
+      <button id="convertBtn">Convert</button>
+      <button class="btn-clear" id="clearBtn" title="Clear">✕</button>
+    </div>
+
+    <div class="tabs" id="tabs" style="margin-top:18px">
+      <button class="tab active" data-mode="all">All formats</button>
+      <button class="tab" data-mode="url">URL / bypass</button>
+      <button class="tab" data-mode="numeric">Numeric</button>
+      <button class="tab" data-mode="network">Network info</button>
+    </div>
+
+    <!-- Results -->
+    <div id="results">
+      <div class="placeholder">
+        <div class="big">🌐</div>
+        Enter an IPv4 address above and click <strong>Convert</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info card -->
+  <div class="card">
+    <p class="results-label">Why alternative IP formats?</p>
+    <div class="info-grid">
+      <div class="info-card">
+        <h4>Security testing</h4>
+        <p>Alternate encodings can bypass naive IP-based filters or WAF rules during authorized pentests.</p>
+      </div>
+      <div class="info-card">
+        <h4>Network tools</h4>
+        <p>Many system utilities and APIs accept decimal, octal, or hex IPs natively (ping, curl, browsers).</p>
+      </div>
+      <div class="info-card">
+        <h4>Education</h4>
+        <p>Understand how IPv4 addresses are stored as 32-bit integers and represented in different bases.</p>
+      </div>
+      <div class="info-card">
+        <h4>CTF challenges</h4>
+        <p>Capture-the-flag competitions often encode IPs in unusual formats as part of puzzles.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- History card -->
+  <div class="card" id="historyCard" style="display:none">
+    <p class="results-label" style="margin-bottom:10px">Recent lookups</p>
+    <div id="historyList"></div>
+  </div>
+
+</main>
+
+<footer>
+  <a href="https://github.com/shivansh5/short-ip" target="_blank" rel="noopener">shivansh5/short-ip</a>
+  &nbsp;·&nbsp; IPv4 only &nbsp;·&nbsp; All processing is client-side
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function parseIP(ip) {
+  ip = ip.trim();
+  const parts = ip.split('.');
+  if (parts.length !== 4) return null;
+  const octets = parts.map(Number);
+  if (octets.some(o => isNaN(o) || o < 0 || o > 255 || String(o) !== parts[octets.indexOf(o)])) return null;
+  // re-check string match to reject "1.2.3.4.5" edge cases
+  if (parts.some(p => p === '' || !/^\d+$/.test(p))) return null;
+  return octets;
+}
+
+function octetsToInt(octets) {
+  return ((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]) >>> 0;
+}
+
+function toHex(n, pad = 2) {
+  return n.toString(16).toUpperCase().padStart(pad, '0');
+}
+
+function toOct(n, pad = 3) {
+  return n.toString(8).padStart(pad, '0');
+}
+
+function toBin(n, pad = 8) {
+  return n.toString(2).padStart(pad, '0');
+}
+
+function cidrInfo(int32) {
+  // Naive class-based info (A/B/C/D/E)
+  const first = (int32 >>> 24) & 0xFF;
+  if (first < 128)       return { cls: 'A', mask: '255.0.0.0',     cidr: '/8',  private: (first === 10) };
+  if (first < 192)       return { cls: 'B', mask: '255.255.0.0',   cidr: '/16', private: (first === 172 && ((int32 >>> 16) & 0xFF) >= 16 && ((int32 >>> 16) & 0xFF) <= 31) };
+  if (first < 224)       return { cls: 'C', mask: '255.255.255.0', cidr: '/24', private: (first === 192 && ((int32 >>> 16) & 0xFF) === 168) };
+  if (first < 240)       return { cls: 'D (Multicast)', mask: 'N/A', cidr: 'N/A', private: false };
+  return                        { cls: 'E (Reserved)',  mask: 'N/A', cidr: 'N/A', private: false };
+}
+
+function isLoopback(octets)  { return octets[0] === 127; }
+function isLinkLocal(octets) { return octets[0] === 169 && octets[1] === 254; }
+function isBroadcast(int32)  { return int32 === 0xFFFFFFFF; }
+
+// ─────────────────────────────────────────────────────────────
+// Build result items
+// ─────────────────────────────────────────────────────────────
+function buildResults(octets, mode) {
+  const int32 = octetsToInt(octets);
+  const hex   = toHex(int32, 8);
+  const info  = cidrInfo(int32);
+
+  const all = [
+    // — Dotted formats
+    { label: 'Dotted Decimal',   value: octets.join('.'),                                  cat: 'all',     valueClass: 'accent' },
+    { label: 'Dotted Hex',       value: octets.map(o => '0x' + toHex(o)).join('.'),        cat: 'url' },
+    { label: 'Dotted Octal',     value: octets.map(o => '0' + toOct(o)).join('.'),         cat: 'url' },
+    { label: 'Dotted Binary',    value: octets.map(o => toBin(o)).join('.'),                cat: 'numeric' },
+    // — Full integer formats
+    { label: 'Decimal (int32)',  value: String(int32),                                     cat: 'numeric', valueClass: 'green' },
+    { label: 'Hexadecimal',      value: '0x' + hex,                                        cat: 'numeric' },
+    { label: 'Octal',            value: '0' + int32.toString(8),                           cat: 'numeric' },
+    { label: 'Binary',           value: toBin(int32, 32).replace(/(.{8})/g,'$1 ').trim(),  cat: 'numeric' },
+    // — URL / bypass variants
+    { label: 'URL (decimal)',    value: 'http://' + String(int32) + '/',                    cat: 'url',     valueClass: 'green' },
+    { label: 'URL (hex)',        value: 'http://0x' + hex + '/',                            cat: 'url' },
+    { label: 'URL (octal)',      value: 'http://0' + int32.toString(8) + '/',               cat: 'url' },
+    { label: 'URL (dotted hex)', value: 'http://' + octets.map(o => '0x' + toHex(o)).join('.') + '/', cat: 'url' },
+    // — Network info
+    { label: 'Class',            value: info.cls,                                           cat: 'network' },
+    { label: 'Default Mask',     value: info.mask,                                          cat: 'network' },
+    { label: 'Default CIDR',     value: info.cidr,                                          cat: 'network' },
+    { label: 'Scope',            value: isLoopback(octets)  ? 'Loopback'
+                                      : isLinkLocal(octets)  ? 'Link-local'
+                                      : isBroadcast(int32)   ? 'Broadcast'
+                                      : info.private          ? 'Private (RFC 1918)'
+                                      : 'Public',                                           cat: 'network' },
+    { label: 'Reverse DNS PTR',  value: [...octets].reverse().join('.') + '.in-addr.arpa', cat: 'network' },
+    { label: 'IPv4-mapped IPv6', value: '::ffff:' + octets.map(o => toHex(o)).join(':').toLowerCase()
+                                         .replace(/(..)(..)/, '$1$2').replace(/:/g,':'),    cat: 'all' },
+  ];
+
+  // Actually format the IPv4-mapped IPv6 properly
+  const v6mapped = '::ffff:' + toHex(octets[0], 2).toLowerCase() + toHex(octets[1], 2).toLowerCase()
+                    + ':' + toHex(octets[2], 2).toLowerCase() + toHex(octets[3], 2).toLowerCase();
+  all[all.length - 1].value = v6mapped;
+
+  return mode === 'all'
+    ? all
+    : all.filter(r => r.cat === mode || r.cat === 'all');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────────────────────
+let currentOctets = null;
+let currentMode   = 'all';
+const history     = [];
+
+function render() {
+  const resultsEl = $('results');
+  if (!currentOctets) {
+    resultsEl.innerHTML = `<div class="placeholder"><div class="big">🌐</div>Enter an IPv4 address above and click <strong>Convert</strong></div>`;
+    return;
+  }
+
+  const items = buildResults(currentOctets, currentMode);
+  resultsEl.innerHTML = `
+    <p class="results-label">${items.length} format${items.length !== 1 ? 's' : ''} for ${currentOctets.join('.')}</p>
+    <div class="results-grid">
+      ${items.map((item, i) => `
+        <div class="result-item" style="animation-delay:${i * 18}ms">
+          <span class="result-label">${item.label}</span>
+          <span class="result-value ${item.valueClass || ''}">${escHtml(item.value)}</span>
+          <button class="copy-btn" data-value="${escAttr(item.value)}" title="Copy">⧉</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // Copy buttons
+  resultsEl.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(btn.dataset.value).then(() => {
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('copied'); }, 1500);
+      });
+    });
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return s.replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────────────────────
+// History
+// ─────────────────────────────────────────────────────────────
+function addHistory(ip) {
+  if (history.includes(ip)) return;
+  history.unshift(ip);
+  if (history.length > 8) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const card = $('historyCard');
+  const list = $('historyList');
+  if (!history.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  list.innerHTML = history.map(ip => `
+    <div class="history-row" data-ip="${escAttr(ip)}">
+      <span>${escHtml(ip)}</span>
+      <small>click to reload</small>
+    </div>
+  `).join('');
+  list.querySelectorAll('.history-row').forEach(row => {
+    row.addEventListener('click', () => {
+      $('ipInput').value = row.dataset.ip;
+      doConvert();
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Convert
+// ─────────────────────────────────────────────────────────────
+function doConvert() {
+  const raw = $('ipInput').value.trim();
+  const octets = parseIP(raw);
+  const input  = $('ipInput');
+  const status = $('inputStatus');
+
+  if (!octets) {
+    input.className = raw ? 'invalid' : '';
+    status.textContent = raw ? '✗' : '';
+    status.style.color = 'var(--red)';
+    currentOctets = null;
+    render();
+    return;
+  }
+
+  input.className = 'valid';
+  status.textContent = '✓';
+  status.style.color = 'var(--green)';
+
+  currentOctets = octets;
+  addHistory(octets.join('.'));
+  render();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Event listeners
+// ─────────────────────────────────────────────────────────────
+$('convertBtn').addEventListener('click', doConvert);
+
+$('ipInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doConvert();
+});
+
+$('ipInput').addEventListener('input', () => {
+  const inp = $('ipInput');
+  const status = $('inputStatus');
+  const v = inp.value.trim();
+  if (!v) { inp.className = ''; status.textContent = ''; return; }
+  const ok = parseIP(v);
+  inp.className = ok ? 'valid' : '';
+  status.textContent = ok ? '✓' : '';
+  status.style.color = 'var(--green)';
+  // live convert when valid
+  if (ok) { currentOctets = ok; render(); }
+});
+
+$('clearBtn').addEventListener('click', () => {
+  $('ipInput').value = '';
+  $('ipInput').className = '';
+  $('inputStatus').textContent = '';
+  currentOctets = null;
+  render();
+});
+
+// Tabs
+$('tabs').querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    $('tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    render();
+  });
+});
+
+// Detect mode changes and re-render
+// (already handled above)
+
+// ─────────────────────────────────────────────────────────────
+// Pre-fill a demo on load
+// ─────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  $('ipInput').value = '192.168.1.1';
+  doConvert();
+  $('ipInput').focus();
+  $('ipInput').select();
+});
+</script>
+</body>
+</html>
